@@ -11,17 +11,21 @@ DEFAULT_THREADS = 4
 
 # Build a manifest object using the provided directory as the root
 findAllFiles = (localPath , cb) ->
-  streamErr = null
-  paths = []
-  fileStream = readdirp {root: path.resolve(localPath)}
-  fileStream.on 'data', (entry) ->
-    if entry.stat.isFile()
-      paths.push entry.path
-  fileStream.on 'error', (err) ->
-    streamErr = err
-    fileStream.destroy()
-  fileStream.on 'close', ->
-    cb streamErr, paths
+  fs.exists localPath, (exists) ->
+    if exists
+      streamErr = null
+      paths = []
+      fileStream = readdirp {root: path.resolve(localPath)}
+      fileStream.on 'data', (entry) ->
+        if entry.stat.isFile()
+          paths.push entry.path
+      fileStream.on 'error', (err) ->
+        streamErr = err
+        fileStream.destroy()
+      fileStream.on 'close', ->
+        cb streamErr, paths
+    else
+      cb null, []
 
 # Given a list of file paths, return a mapping of each path to the checksum of the file
 buildManifestForFiles = (paths, numThreads, cb) ->

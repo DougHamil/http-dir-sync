@@ -25,14 +25,20 @@ getServerManifest = (url, cb) ->
         cb ex
 
 downloadFile = (hostUrl, localPath, file, cb) ->
-  opts =
-    url: url.resolve(hostUrl, file)
-    headers:
-      'accept-encoding':'gzip'
-  gzip = zlib.createGzip()
-  out = fs.createWriteStream(path.join(localPath,file))
-  out.end cb
-  request.get(opts).pipe(gzip).pipe(out)
+  filePath = path.join(localPath, file)
+  # Recusively build directory if it doesn't exist
+  mkdirp path.dirname(filePath), (err) ->
+    if err?
+      cb err
+    else
+      opts =
+        url: url.resolve(hostUrl, file)
+        headers:
+          'accept-encoding':'gzip'
+      gzip = zlib.createGzip()
+      out = fs.createWriteStream(filePath)
+      out.end cb
+      request.get(opts).pipe(gzip).pipe(out)
 
 # Process a manifest difference object to make the local directory match the source
 processManifestDiff = (diff, localPath, url, numThreads, cb) ->
