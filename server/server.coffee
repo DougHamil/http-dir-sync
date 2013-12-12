@@ -15,9 +15,7 @@ module.exports = (localPath, name) ->
     update: (cb) ->
       manifest.get localPath, (err, localManifest) ->
         state.manifest = localManifest
-        # Callback is optional
-        if cb?
-          cb err, localManifest
+        cb err, localManifest
 
     # Middleware handler
     handler: (req, res, next) ->
@@ -38,6 +36,3 @@ module.exports = (localPath, name) ->
               fs.createReadStream(fullPath).pipe(zlib.createGzip()).pipe(response)
       else
         next()
-
-
-

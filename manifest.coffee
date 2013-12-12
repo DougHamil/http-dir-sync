@@ -10,7 +10,7 @@ mkdirp = require 'mkdirp'
 DEFAULT_THREADS = 4
 
 # Build a manifest object using the provided directory as the root
-findAllFiles = (localPath , cb) ->
+findAllFiles = (localPath, cb) ->
   fs.exists localPath, (exists) ->
     if exists
       streamErr = null
