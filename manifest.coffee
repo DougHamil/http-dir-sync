@@ -6,6 +6,7 @@ readdirp = require 'readdirp'
 crypto = require 'crypto'
 _ = require 'underscore'
 mkdirp = require 'mkdirp'
+async = require 'async'
 
 DEFAULT_THREADS = 4
 
@@ -18,11 +19,13 @@ findAllFiles = (localPath, cb) ->
       fileStream = readdirp {root: path.resolve(localPath)}
       fileStream.on 'data', (entry) ->
         if entry.stat.isFile()
-          paths.push entry.path
+          paths.push {path:entry.path, fullPath:path.join(localPath,entry.path)}
       fileStream.on 'error', (err) ->
         streamErr = err
         fileStream.destroy()
       fileStream.on 'close', ->
+        cb streamErr, paths
+      fileStream.on 'end', ->
         cb streamErr, paths
     else
       cb null, []
@@ -34,7 +37,7 @@ buildManifestForFiles = (paths, numThreads, cb) ->
   numDigested = 0
   # Digest a single file and return the filepath and the hex digest
   digestFile = (file, cb) ->
-    stream = fs.ReadStream file
+    stream = fs.createReadStream file.fullPath
     digest = crypto.createHash 'sha1'
     stream.on 'data', (data) ->
       digest.update data
@@ -42,8 +45,7 @@ buildManifestForFiles = (paths, numThreads, cb) ->
       return cb err
     stream.on 'end', ->
       numDigested++
-      console.log "Digested #{numDigested} of #{totalToDigest} files."
-      cb null, {path:file, hex:digest.digest('hex')}
+      cb null, {path:file.path, hex:digest.digest('hex')}
   # Digest all files, numThreads at a time
   async.mapLimit paths, numThreads, digestFile, (err, results) ->
     if err?
@@ -75,14 +77,15 @@ diffManifests = (goal, cur) ->
 exports.get = (localPath, opts, cb) ->
   if cb?
     opts = opts || {}
-    opts.threads = opts.threads || DEFAULT_THREADS
   else
     cb = opts
+    opts = {}
+  opts.threads = opts.threads || DEFAULT_THREADS
   findAllFiles localPath, (err, files) ->
     if err?
       cb err
     else
-      buildManifestForFiles paths, opts.threads, cb
+      buildManifestForFiles files, opts.threads, cb
 
 # Diff two manifests and return operations to get to the first from the second
 exports.diff = diffManifests
