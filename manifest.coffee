@@ -69,7 +69,7 @@ diffManifests = (goal, cur) ->
   changed = []
   # Find changed files
   for filePath, checksum of goal
-    if checksum != cur[filePath]
+    if checksum != cur[filePath] and cur[filePath]?
       changed.push filePath
   return {changed:changed, added:added, removed:removed}
 

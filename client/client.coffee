@@ -9,6 +9,8 @@ crypto = require 'crypto'
 _ = require 'underscore'
 mkdirp = require 'mkdirp'
 manifest = require '../manifest'
+async = require 'async'
+zlib = require 'zlib'
 
 # Number of files to read and digest at the same time
 DEFAULT_THREADS = 4
@@ -41,15 +43,15 @@ downloadFile = (hostUrl, localPath, file, cb) ->
       request.get(opts).pipe(gzip).pipe(out)
 
 # Process a manifest difference object to make the local directory match the source
-processManifestDiff = (diff, localPath, url, numThreads, cb) ->
+processManifestDiff = (diff, localPath, hostUrl, numThreads, cb) ->
   applyDownload = (file, cb) -> downloadFile hostUrl, localPath, file, cb
-  map.series [
+  async.series [
     (cb) ->
       # Delete all removed files
-      async.mapLimit diff.removed, numThreads, fs.unlink, cb
+      async.mapLimit (diff.removed.map (file) -> path.join(localPath, file)), numThreads, fs.unlink, cb
     (cb) ->
       # Delete all changed files (note we may want to use deltas here)
-      async.mapLimit diff.changed, numThreads, fs.unlink, cb
+      async.mapLimit (diff.changed.map (file) -> path.join(localPath, file)), numThreads, fs.unlink, cb
     (cb) ->
       # Download all added files
       async.mapLimit diff.added, numThreads, applyDownload, cb
