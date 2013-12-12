@@ -14,7 +14,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/DougHamil/http-dir-sync.git"
+    "url": "git+http://github.com/DougHamil/http-dir-sync.git"
   },
   "author": "Doug Hamilton",
   "license": "MIT",
