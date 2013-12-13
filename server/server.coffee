@@ -24,9 +24,8 @@ module.exports = (localPath, name) ->
         if req.url is state.urlName
           res.json state.manifest
         # A path with the name as root means a file request
-        else if req.url.indexOf state.urlName == 0
+        else if req.url.indexOf(state.urlName) == 0
           filePath = req.url.substring(state.urlNameLength)
-          console.log "Request for file #{filePath}"
           fullPath = path.join(state.localPath, filePath)
           fs.exists fullPath, (exists) ->
             if not exists
@@ -34,5 +33,7 @@ module.exports = (localPath, name) ->
             else
               res.writeHead 200, {'content-encoding':'gzip'}
               fs.createReadStream(fullPath).pipe(zlib.createGzip()).pipe(res)
+        else
+          next()
       else
         next()
