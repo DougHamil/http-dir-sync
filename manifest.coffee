@@ -10,6 +10,10 @@ async = require 'async'
 
 DEFAULT_THREADS = 4
 
+# Normalize paths between OSes (basically turn \\ into /)
+normalizePath = (p) ->
+  return p.replace(/\\/g, '/')
+
 # Build a manifest object using the provided directory as the root
 findAllFiles = (localPath, cb) ->
   fs.exists localPath, (exists) ->
@@ -53,12 +57,13 @@ buildManifestForFiles = (paths, numThreads, cb) ->
     else
       manifest = {}
       for result in results
-        manifest[result.path] = result.hex
+        manifest[normalizePath(result.path)] = result.hex
       cb null, manifest
 
 # Given a goal manifest and a current manifest, determine the operations that need to
 # happen to make the current match the goal
 diffManifests = (goal, cur) ->
+
   curPaths = (key for key of cur)
   goalPaths = (key for key of goal)
 

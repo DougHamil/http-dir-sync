@@ -4,6 +4,7 @@ url = require 'url'
 os = require 'os'
 readdirp = require 'readdirp'
 http = require 'http'
+https = require 'https'
 request = require 'request'
 crypto = require 'crypto'
 _ = require 'underscore'
@@ -33,14 +34,15 @@ downloadFile = (hostUrl, localPath, file, cb) ->
     if err?
       cb err
     else
+      fullUrl = url.resolve(hostUrl+'/', './'+file)
       opts =
-        url: url.resolve(hostUrl, file)
+        url: fullUrl
         headers:
           'accept-encoding':'gzip'
-      gzip = zlib.createGzip()
-      out = fs.createWriteStream(filePath)
-      out.end cb
-      request.get(opts).pipe(gzip).pipe(out)
+      console.log "Downloading #{opts.url} to #{filePath}"
+      request(opts).pipe(zlib.createGunzip()).pipe(fs.createWriteStream(filePath))
+        .on('close', cb)
+        .on('error', cb)
 
 # Process a manifest difference object to make the local directory match the source
 processManifestDiff = (diff, localPath, hostUrl, numThreads, cb) ->
